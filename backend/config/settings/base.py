@@ -65,6 +65,7 @@ LOCAL_APPS = [
     "apps.chat",
     "apps.groups",
     "apps.calls",
+    "apps.administration",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -80,6 +81,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Platform hardening (after auth so request.user is available for session reqs).
+    "apps.administration.middleware.MaintenanceModeMiddleware",
+    "apps.administration.middleware.UserLanguageMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"

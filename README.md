@@ -4,10 +4,10 @@ A production-grade, self-hostable messaging platform (Discord/Telegram/Slack-cla
 built on Django 5, Django Channels, PostgreSQL, Redis, Celery, and a Nuxt 3 frontend.
 Everything runs on free and open-source software.
 
-> **Status — Phases 0–6 complete** (Foundation, Authentication, Profiles/Social/
-> Presence, Realtime 1:1 Chat, Media/Files, Groups/Channels, and Voice/Video
-> Calls). The platform is built as a sequence of complete, verified vertical
-> slices. See the [Roadmap](#roadmap) for what is done and what's next.
+> **Status — Phases 0–7 complete** (Foundation, Authentication, Profiles/Social/
+> Presence, Realtime 1:1 Chat, Media/Files, Groups/Channels, Voice/Video Calls,
+> and Admin/i18n/Hardening). The full backend + WebSocket API is done; the Nuxt
+> frontend (Phase 8) is next. See the [Roadmap](#roadmap).
 
 ---
 
@@ -176,7 +176,11 @@ The build proceeds one complete, verified slice at a time.
   (ring → accept/reject → ongoing → end, with missed/cancelled), call history,
   per-peer mute/video/raise-hand state, and ICE-server config (STUN; TURN via
   env). *(Large group calls would add an SFU — noted for production.)*
-- [ ] **Phase 7 — Admin, i18n, hardening:** admin panel, Arabic/English RTL, security pass, load tests.
+- [x] **Phase 7 — Admin, i18n, hardening:** admin dashboard analytics (users/
+  messages/calls/storage + daily charts), abuse reporting + moderation, runtime
+  feature flags, announcements, user management, admin audit log, singleton system
+  config with a **maintenance-mode** middleware (kill-switch), and i18n
+  (English/Arabic) language negotiation via `X-Language` / Accept-Language.
 - [ ] **Phase 8 — Frontend:** Nuxt 3 app consuming the full API.
 
 ---

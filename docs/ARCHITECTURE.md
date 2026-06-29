@@ -191,6 +191,25 @@ Key mechanisms:
   a TURN server is added via `WEBRTC_TURN_URL`). Mesh suits 1:1 and small groups;
   large group calls would introduce an SFU — out of scope here, noted for prod.
 
+## Administration, moderation & hardening (Phase 7)
+
+* **Admin panel API** (`/api/v1/admin/`, `IsAdminUser`): dashboard analytics
+  (counts + 14-day signup/message charts via DB aggregation), report moderation,
+  feature-flag CRUD, announcements, user management, and an admin audit log
+  (every privileged mutation is recorded with actor + IP).
+* **Abuse reporting** is open to any authenticated user; admins triage via the
+  moderation queue. **Feature flags** and **announcements** have user-facing read
+  endpoints so the client can react at runtime.
+* **Maintenance mode** is a singleton `SystemConfig` (cached) enforced by
+  middleware: normal traffic gets 503 while health checks, the admin API, login,
+  and docs stay reachable — so an admin can always switch it back off (verified
+  in tests).
+* **i18n** — English/Arabic. `UserLanguageMiddleware` honours an `X-Language`
+  header (over Django's Accept-Language negotiation) so the client can force a
+  language and drive RTL, without a cookie round-trip. `GET /i18n/languages/`
+  lists the supported set. Translation catalogs are added via Django's
+  make/compile-messages; the negotiation layer is in place.
+
 ## Redis: three roles, three logical DBs
 
 | DB | Role |

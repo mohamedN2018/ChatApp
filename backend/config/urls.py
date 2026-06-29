@@ -30,6 +30,7 @@ api_v1_patterns = [
     path("media/", include("apps.media.urls")),
     path("groups/", include("apps.groups.urls")),
     path("calls/", include("apps.calls.urls")),
+    path("", include("apps.administration.urls")),
 ]
 
 urlpatterns = [
