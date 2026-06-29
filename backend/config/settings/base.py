@@ -191,7 +191,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 # --- Django REST Framework --------------------------------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "apps.accounts.authentication.SessionAwareJWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
@@ -210,6 +210,12 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "60/min",
         "user": "1000/min",
+        # Per-endpoint scopes for sensitive auth actions (brute-force defence).
+        "login": "10/min",
+        "register": "5/min",
+        "verify_email": "20/min",
+        "resend_verification": "3/min",
+        "password_reset": "5/min",
     },
     "EXCEPTION_HANDLER": "apps.common.exceptions.api_exception_handler",
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",

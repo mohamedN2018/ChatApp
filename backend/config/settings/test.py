@@ -13,6 +13,9 @@ from .base import *  # noqa: F403
 DEBUG = False
 ALLOWED_HOSTS = ["*"]
 
+# A >=32-byte key so SimpleJWT's HMAC signing doesn't emit a length warning.
+SECRET_KEY = "test-secret-key-not-for-production-min-32-bytes-long"
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -27,6 +30,12 @@ CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"
 CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+
+# Disable throttling by default in tests (rate=None => always allowed). The
+# dedicated throttle test re-enables a low rate via override_settings.
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = dict.fromkeys(  # noqa: F405
+    REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]  # noqa: F405
+)
 
 # Run Celery tasks synchronously in-process during tests.
 CELERY_TASK_ALWAYS_EAGER = True

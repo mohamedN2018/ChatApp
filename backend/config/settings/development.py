@@ -20,6 +20,11 @@ REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = (  # noqa: F405
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa: F405
     "anon": "1000/min",
     "user": "10000/min",
+    "login": "100/min",
+    "register": "100/min",
+    "verify_email": "100/min",
+    "resend_verification": "100/min",
+    "password_reset": "100/min",
 }
 
 CORS_ALLOW_ALL_ORIGINS = True

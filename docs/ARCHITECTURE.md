@@ -55,6 +55,36 @@ window (added with the chat phase, where volume justifies it).
 * **Argon2** is the primary password hasher (memory-hard, OWASP-recommended),
   with PBKDF2/bcrypt kept for verifying legacy hashes.
 
+## Authentication (Phase 1)
+
+The auth slice is structured as a **service layer** (`apps/accounts/services.py`):
+views/serializers validate and shape I/O, while `AuthService` owns every rule, so
+the logic is unit-testable without HTTP and reused identically across endpoints.
+
+Key mechanisms:
+
+* **One-time tokens** (`OneTimeToken`) for email verification and password reset
+  store only a SHA-256 *hash* of the token — the raw value is emailed and never
+  persisted, so a DB leak yields no usable tokens. Tokens are single-use,
+  expiring, and issuing a new one invalidates prior ones of the same purpose.
+* **Session-bound JWTs.** Each login creates a `UserSession`; its id rides in the
+  `sid` claim of both access and refresh tokens. This decouples "is this login
+  valid?" from token expiry and powers the active-devices UI.
+* **Immediate revocation.** Logout / "sign out this device" / password change flip
+  the session, enforced two ways: access tokens are rejected at once via a Redis
+  flag checked in `SessionAwareJWTAuthentication`; refresh is rejected because the
+  refresh serializer checks the backing session is still active. No per-user
+  token-blacklist scans needed. A password *reset* signs out every device; a
+  *change* keeps the current one.
+* **Security log.** `SecurityEvent` is an append-only audit trail (login,
+  login-failed, logout, password change/reset, session revoked…) surfaced as the
+  user's login history and to admins for suspicious-activity review.
+* **Async email** via Celery (verification, reset, login alert) so SMTP never
+  blocks a request. **Per-endpoint throttling** (scoped rates on login, register,
+  verify, reset) defends against brute force. Privacy-preserving responses on
+  resend-verification and reset-request never reveal whether an email is
+  registered.
+
 ## Realtime (ASGI + Channels)
 
 * A single **ASGI** application (`config/asgi.py`) multiplexes HTTP (Django/DRF)

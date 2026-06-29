@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .models import User
+from .models import OneTimeToken, SecurityEvent, User, UserSession
 
 
 @admin.register(User)
@@ -51,3 +51,77 @@ class UserAdmin(DjangoUserAdmin):
             },
         ),
     )
+
+
+@admin.register(OneTimeToken)
+class OneTimeTokenAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "purpose", "expires_at", "consumed_at", "created_at")
+    list_filter = ("purpose",)
+    search_fields = ("user__email", "user__username")
+    readonly_fields = (
+        "id",
+        "user",
+        "purpose",
+        "token_hash",
+        "expires_at",
+        "consumed_at",
+        "created_at",
+        "updated_at",
+    )
+    ordering = ("-created_at",)
+
+    def has_add_permission(self, request) -> bool:
+        return False
+
+
+@admin.register(UserSession)
+class UserSessionAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "user",
+        "device_label",
+        "ip_address",
+        "last_used_at",
+        "expires_at",
+        "revoked_at",
+    )
+    list_filter = ("revoked_at",)
+    search_fields = ("user__email", "user__username", "ip_address", "device_label")
+    readonly_fields = (
+        "id",
+        "user",
+        "device_label",
+        "user_agent",
+        "ip_address",
+        "last_used_at",
+        "expires_at",
+        "revoked_at",
+        "created_at",
+        "updated_at",
+    )
+    ordering = ("-last_used_at",)
+
+    def has_add_permission(self, request) -> bool:
+        return False
+
+
+@admin.register(SecurityEvent)
+class SecurityEventAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "event_type", "ip_address", "created_at")
+    list_filter = ("event_type",)
+    search_fields = ("user__email", "user__username", "ip_address")
+    readonly_fields = (
+        "id",
+        "user",
+        "event_type",
+        "ip_address",
+        "user_agent",
+        "metadata",
+        "created_at",
+        "updated_at",
+    )
+    date_hierarchy = "created_at"
+    ordering = ("-created_at",)
+
+    def has_add_permission(self, request) -> bool:
+        return False

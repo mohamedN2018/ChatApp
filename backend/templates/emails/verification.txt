@@ -1,0 +1,10 @@
+Hi {{ name }},
+
+Welcome to {{ app_name }}! Please confirm your email address to activate your account.
+
+Confirm your email:
+{{ action_url }}
+
+This link expires in {{ expires_hours }} hours. If you didn't create an account, you can ignore this email.
+
+— The {{ app_name }} team

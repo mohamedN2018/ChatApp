@@ -1,0 +1,12 @@
+Hi {{ name }},
+
+Your {{ app_name }} account was just signed in to from a new session.
+
+  Time:       {{ when }}
+  IP address: {{ ip }}
+  Device:     {{ user_agent }}
+
+If this was you, no action is needed. If you don't recognise this activity, reset your password and review your active sessions immediately:
+{{ security_url }}
+
+— The {{ app_name }} team
