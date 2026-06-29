@@ -52,7 +52,7 @@ class ServeFileView(APIView):
             raise PermissionDenied("Invalid or expired file link.") from exc
         if not default_storage.exists(name):
             raise Http404()
-        content_type = "image/webp" if name.endswith(".webp") else mimetypes.guess_type(name)[0]
+        ctype = "image/webp" if name.endswith(".webp") else mimetypes.guess_type(name)[0]
         return FileResponse(
-            default_storage.open(name, "rb"), content_type=content_type or "application/octet-stream"
+            default_storage.open(name, "rb"), content_type=ctype or "application/octet-stream"
         )

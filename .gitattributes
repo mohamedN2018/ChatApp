@@ -15,6 +15,7 @@ Dockerfile  text eol=lf
 *.ps1       text eol=crlf
 
 # Binary assets — never normalize.
+*.mo   binary
 *.png  binary
 *.jpg  binary
 *.jpeg binary

@@ -67,6 +67,15 @@ def test_x_language_header_sets_content_language(user):
     assert resp.headers.get("Content-Language") == "ar"
 
 
+def test_arabic_message_catalog_is_loaded():
+    from django.utils import translation
+    from django.utils.translation import gettext as _g
+
+    with translation.override("ar"):
+        assert _g("Invalid email or password.") == "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+        assert _g("Online") == "متصل"
+
+
 # ---------------------------------------------------------------- admin access
 def test_non_admin_blocked_from_admin_endpoints(user):
     assert client_for(user).get(reverse("v1:administration:dashboard")).status_code == 403

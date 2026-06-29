@@ -1,0 +1,62 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: ChatApp\n"
+"Report-Msgid-Bugs-To: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+# --- Authentication messages ---
+msgid "An account with this email already exists."
+msgstr "يوجد حساب بهذا البريد الإلكتروني بالفعل."
+
+msgid "This username is already taken."
+msgstr "اسم المستخدم هذا مستخدم بالفعل."
+
+msgid "Invalid email or password."
+msgstr "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+
+msgid "Passwords do not match."
+msgstr "كلمتا المرور غير متطابقتين."
+
+msgid "Current password is incorrect."
+msgstr "كلمة المرور الحالية غير صحيحة."
+
+msgid "This session is no longer active."
+msgstr "هذه الجلسة لم تعد نشطة."
+
+msgid ""
+"Username must be 3–32 characters and contain only letters, numbers, and "
+"underscores."
+msgstr ""
+"يجب أن يتكوّن اسم المستخدم من 3 إلى 32 حرفًا، ويحتوي فقط على حروف وأرقام "
+"وشرطات سفلية."
+
+# --- Presence labels ---
+msgid "Online"
+msgstr "متصل"
+
+msgid "Away"
+msgstr "بعيد"
+
+msgid "Busy"
+msgstr "مشغول"
+
+msgid "Invisible"
+msgstr "مخفي"
+
+msgid "Offline"
+msgstr "غير متصل"
+
+# --- Visibility labels ---
+msgid "Everyone"
+msgstr "الجميع"
+
+msgid "Friends only"
+msgstr "الأصدقاء فقط"
+
+msgid "Nobody"
+msgstr "لا أحد"
