@@ -89,10 +89,32 @@ Key mechanisms:
 
 * A single **ASGI** application (`config/asgi.py`) multiplexes HTTP (Django/DRF)
   and WebSocket (Channels) so both share the auth stack, ORM, and settings.
-* The WebSocket `URLRouter` is empty in Phase 0; chat/presence/call consumers and
-  a JWT WebSocket auth middleware are added in their phases.
+* **WebSocket auth** (`apps/realtime/middleware.py`): a JWT access token is passed
+  as `?token=…` (browsers can't set WS headers); the same session-revocation check
+  used for HTTP applies, so a revoked session can't open a socket.
 * **`channels-redis`** backs the channel layer, enabling horizontal scaling:
   multiple ASGI workers coordinate fan-out through Redis pub/sub.
+
+## Profiles, social graph & presence (Phase 2)
+
+* **Side tables, not a fat user row.** `Profile`, `PrivacySettings`, and
+  `NotificationSettings` are 1:1 with `User`, auto-provisioned by a `post_save`
+  signal, keeping the auth hot-path table narrow.
+* **Dual social model.** Asymmetric `Follow` (followers/following) *and* symmetric
+  friendship (`FriendRequest` → `Friendship`, stored canonically as an ordered
+  pair). Sending a request to someone who already requested you auto-accepts.
+* **Block is a hard cascade** (`SocialService.block`): severs follows and
+  friendship both ways and cancels pending requests. **Mute** is soft (suppresses
+  notifications silently). Privacy gates (`everyone`/`friends`/`nobody`) govern who
+  can follow, friend, and view a profile.
+* **Realtime presence** (`apps/realtime`): a user is online while holding ≥1 live
+  WebSocket. Connections are tracked in a Redis SET per user with a heartbeat TTL,
+  so a crashed client expires instead of pinning online. The `PresenceConsumer`
+  lets clients `subscribe` to specific users (fan-out via `presence.u.{id}` groups)
+  and `set_status` (online/away/busy/invisible). `resolve_visible_status` combines
+  connectivity + chosen mode + privacy; a REST endpoint exposes the same for
+  initial render. Image uploads (avatar/cover) are validated and re-encoded to
+  WebP via Pillow (`apps/common/images.py`), with a decompression-bomb guard.
 
 ## Redis: three roles, three logical DBs
 

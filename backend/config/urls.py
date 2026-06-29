@@ -23,6 +23,9 @@ from apps.common.views import LivenessView, ReadinessView
 # --- API v1 -----------------------------------------------------------------
 api_v1_patterns = [
     path("accounts/", include("apps.accounts.urls")),
+    path("profiles/", include("apps.profiles.urls")),
+    path("social/", include("apps.social.urls")),
+    path("presence/", include("apps.realtime.urls")),
 ]
 
 urlpatterns = [

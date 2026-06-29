@@ -11,6 +11,7 @@ pytest-asyncio>=0.25,<1.0
 pytest-cov>=6.0,<7.0
 factory-boy>=3.3,<4.0             # model factories for tests
 freezegun>=1.5,<2.0              # deterministic time in tests
+fakeredis>=2.26,<3.0            # in-memory Redis for presence tests
 
 # --- Quality ---
 ruff>=0.9,<1.0                   # linter + formatter

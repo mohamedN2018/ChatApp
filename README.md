@@ -4,9 +4,9 @@ A production-grade, self-hostable messaging platform (Discord/Telegram/Slack-cla
 built on Django 5, Django Channels, PostgreSQL, Redis, Celery, and a Nuxt 3 frontend.
 Everything runs on free and open-source software.
 
-> **Status — Phases 0–1 complete** (Foundation + Authentication). The platform is
-> built as a sequence of complete, verified vertical slices. See the
-> [Roadmap](#roadmap) for what is done and what's next.
+> **Status — Phases 0–2 complete** (Foundation + Authentication + Profiles/Social/
+> Presence). The platform is built as a sequence of complete, verified vertical
+> slices. See the [Roadmap](#roadmap) for what is done and what's next.
 
 ---
 
@@ -151,7 +151,11 @@ The build proceeds one complete, verified slice at a time.
   tokens), JWT + rotating refresh, session-bound login with **immediate
   revocation**, logout, password reset/change, device/session management,
   security log, async email (Celery), per-endpoint rate limiting.
-- [ ] **Phase 2 — Profiles & Social:** profiles, avatar/cover, follow/friend/block/mute, privacy.
+- [x] **Phase 2 — Profiles & Social & Presence:** profile (avatar/cover via Pillow,
+  bio/links/custom status), privacy + notification settings, follow/unfollow,
+  friend requests (with mutual auto-accept), block (cascading), mute, and
+  **realtime presence** over a JWT-authenticated WebSocket (Redis-backed
+  online/away/busy/invisible + last-seen, with a REST fallback).
 - [ ] **Phase 3 — Realtime chat (1:1):** Channels consumers, conversations,
   messages, typing, receipts, reactions, edit/delete.
 - [ ] **Phase 4 — Media & files:** MinIO uploads, chunked upload, image/video processing, voice notes.

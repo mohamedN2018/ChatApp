@@ -2,9 +2,8 @@
 ASGI entrypoint.
 
 Routes HTTP to the Django ASGI app and WebSocket traffic through the Channels
-stack. The WebSocket URLRouter is intentionally empty for Phase 0; realtime
-consumers are added in the chat phase. JWT WebSocket auth middleware is wired
-in then as well.
+stack: origin validation -> JWT auth (from ?token=) -> URL router. Consumer
+imports happen only after the Django app registry is initialised.
 """
 
 from __future__ import annotations
@@ -18,17 +17,17 @@ from django.core.asgi import get_asgi_application
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
 
 # Initialise Django ASGI application early to populate the app registry before
-# importing anything that touches models/consumers.
+# importing consumers/middleware that touch models.
 django_asgi_app = get_asgi_application()
 
-# WebSocket routes are registered here as features land (chat, calls, presence).
-websocket_urlpatterns: list = []
+from apps.realtime.middleware import JWTAuthMiddleware  # noqa: E402
+from apps.realtime.routing import websocket_urlpatterns  # noqa: E402
 
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
         "websocket": AllowedHostsOriginValidator(
-            URLRouter(websocket_urlpatterns),
+            JWTAuthMiddleware(URLRouter(websocket_urlpatterns)),
         ),
     }
 )
