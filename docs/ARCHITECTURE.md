@@ -139,6 +139,24 @@ Key mechanisms:
 * **Channel-layer payloads** are normalised through DRF's JSON encoder so UUIDs/
   datetimes survive both the in-memory (tests) and Redis/msgpack (prod) layers.
 
+## Media & files (Phase 4)
+
+* **Object storage by default.** User media lives in MinIO/S3 via django-storages,
+  toggled by `USE_S3` (on in the dev compose + production; the test suite uses
+  in-memory storage). MinIO needs path-style addressing.
+* **Two upload paths, one model.** Direct multipart upload for small files; a
+  **chunked/resumable** session (`init → chunk → complete`, with a status endpoint
+  for resume) for large ones, assembled server-side. Both yield a `MediaFile`.
+* **Async processing** (Celery, off the request path): `status` advances
+  PENDING → PROCESSING → READY/FAILED. Images get dimensions + a WebP thumbnail
+  (Pillow); video gets dimensions, duration, and a poster frame (FFmpeg); audio
+  gets duration; voice notes additionally get a downsampled waveform. FFmpeg is in
+  the container image and the code degrades gracefully where it's absent. Verified
+  live: an uploaded image and its generated thumbnail both land in the MinIO bucket.
+* **Access control.** A `MediaFile` is readable by its owner, or by any participant
+  of a conversation where it's attached (`MessageAttachment`). URLs are
+  time-limited presigned links.
+
 ## Redis: three roles, three logical DBs
 
 | DB | Role |

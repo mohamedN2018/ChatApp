@@ -29,6 +29,13 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
+# In-memory storage: media tests touch no disk and no MinIO; also avoids the
+# whitenoise manifest static-storage warning.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 # Disable throttling by default in tests (rate=None => always allowed). The

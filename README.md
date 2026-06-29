@@ -4,10 +4,10 @@ A production-grade, self-hostable messaging platform (Discord/Telegram/Slack-cla
 built on Django 5, Django Channels, PostgreSQL, Redis, Celery, and a Nuxt 3 frontend.
 Everything runs on free and open-source software.
 
-> **Status — Phases 0–3 complete** (Foundation, Authentication, Profiles/Social/
-> Presence, and Realtime 1:1 Chat). The platform is built as a sequence of
-> complete, verified vertical slices. See the [Roadmap](#roadmap) for what is
-> done and what's next.
+> **Status — Phases 0–4 complete** (Foundation, Authentication, Profiles/Social/
+> Presence, Realtime 1:1 Chat, and Media/Files). The platform is built as a
+> sequence of complete, verified vertical slices. See the [Roadmap](#roadmap) for
+> what is done and what's next.
 
 ---
 
@@ -162,7 +162,10 @@ The build proceeds one complete, verified slice at a time.
   receipts, unread counts, pin/archive/mute, cursor-paginated history (infinite
   scroll), and a JWT WebSocket `ChatConsumer` (send/typing/read/react/edit/delete)
   — REST and WS share one service so a REST send is delivered in realtime.
-- [ ] **Phase 4 — Media & files:** MinIO uploads, chunked upload, image/video processing, voice notes.
+- [x] **Phase 4 — Media & files:** MinIO/S3 object storage, direct + chunked/
+  resumable uploads, async processing (Pillow image thumbnails + dimensions;
+  FFmpeg video poster/duration; audio duration; voice-note waveforms),
+  access-controlled retrieval, and chat message attachments.
 - [ ] **Phase 5 — Groups & channels:** roles/permissions, public/private, channels.
 - [ ] **Phase 6 — Voice & video calls:** WebRTC signaling, 1:1 then group (SFU).
 - [ ] **Phase 7 — Admin, i18n, hardening:** admin panel, Arabic/English RTL, security pass, load tests.

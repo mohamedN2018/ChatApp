@@ -24,6 +24,7 @@ x-backend-env: &backend-env
   MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
   MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
   MINIO_BUCKET: ${MINIO_BUCKET:-chatapp-media}
+  USE_S3: "true"
 
 services:
   postgres:

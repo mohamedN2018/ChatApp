@@ -61,6 +61,7 @@ LOCAL_APPS = [
     "apps.profiles",
     "apps.social",
     "apps.realtime",
+    "apps.media",
     "apps.chat",
 ]
 
@@ -271,6 +272,24 @@ AWS_S3_REGION_NAME = env("MINIO_REGION", default="us-east-1")
 AWS_S3_USE_SSL = env.bool("MINIO_USE_SSL", default=False)
 AWS_S3_FILE_OVERWRITE = False
 AWS_QUERYSTRING_AUTH = True
+
+# Toggle object storage (MinIO/S3) for user media. Off by default (filesystem,
+# used by the test suite); enabled in the dev compose and production so uploads
+# land in MinIO. MinIO requires path-style addressing.
+USE_S3 = env.bool("USE_S3", default=False)
+if USE_S3:
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            "endpoint_url": AWS_S3_ENDPOINT_URL,
+            "region_name": AWS_S3_REGION_NAME,
+            "use_ssl": AWS_S3_USE_SSL,
+            "file_overwrite": False,
+            "querystring_auth": True,
+            "addressing_style": "path",
+        },
+    }
 
 # --- Email (overridden per environment) -------------------------------------
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="ChatApp <no-reply@chatapp.local>")

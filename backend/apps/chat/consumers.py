@@ -74,10 +74,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             content.get("text", ""),
             content.get("reply_to"),
             content.get("client_id", ""),
+            content.get("attachment_ids") or [],
         )
 
     @database_sync_to_async
-    def _do_send(self, conversation_id, text, reply_to_id, client_id):
+    def _do_send(self, conversation_id, text, reply_to_id, client_id, attachment_ids):
         conversation = Conversation.objects.get(pk=conversation_id)
         reply_to = (
             Message.objects.filter(pk=reply_to_id, conversation=conversation).first()
@@ -91,6 +92,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             text=text,
             reply_to=reply_to,
             metadata=metadata,
+            attachment_ids=[str(a) for a in attachment_ids],
         )
 
     async def _read(self, content):

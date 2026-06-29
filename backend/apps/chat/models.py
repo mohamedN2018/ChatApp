@@ -161,6 +161,26 @@ class Message(BaseModel):
         self.save(update_fields=["deleted_for_everyone", "text", "updated_at"])
 
 
+class MessageAttachment(UUIDModel, TimeStampedModel):
+    """Links a message to an uploaded media file (images, video, voice, files)."""
+
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="attachments")
+    media = models.ForeignKey(
+        "media.MediaFile", on_delete=models.CASCADE, related_name="message_attachments"
+    )
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = "chat_message_attachment"
+        ordering = ["order", "created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["message", "media"], name="uniq_message_media")
+        ]
+
+    def __str__(self) -> str:
+        return f"attachment {self.media_id} on {self.message_id}"
+
+
 class MessageReaction(UUIDModel, TimeStampedModel):
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="reactions")
     user = models.ForeignKey(USER, on_delete=models.CASCADE, related_name="message_reactions")

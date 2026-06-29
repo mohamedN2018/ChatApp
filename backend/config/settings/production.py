@@ -20,17 +20,9 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
 # --- Media via S3/MinIO ---
-STORAGES["default"] = {  # noqa: F405
-    "BACKEND": "storages.backends.s3.S3Storage",
-    "OPTIONS": {
-        "bucket_name": AWS_STORAGE_BUCKET_NAME,  # noqa: F405
-        "endpoint_url": AWS_S3_ENDPOINT_URL,  # noqa: F405
-        "region_name": AWS_S3_REGION_NAME,  # noqa: F405
-        "use_ssl": AWS_S3_USE_SSL,  # noqa: F405
-        "file_overwrite": False,
-        "querystring_auth": True,
-    },
-}
+# Object storage is enabled via USE_S3 (see base.py); production requires it.
+if not USE_S3:  # noqa: F405
+    raise RuntimeError("USE_S3 must be true in production (set it in the environment).")
 
 # --- Real SMTP email ---
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

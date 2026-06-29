@@ -120,7 +120,7 @@ class MessageListCreateView(APIView):
         participant = conversation.participants.get(user=request.user)
         qs = (
             conversation.messages.select_related("sender__profile", "reply_to__sender__profile")
-            .prefetch_related("reactions")
+            .prefetch_related("reactions", "attachments__media")
             .exclude(hidden_for=request.user)
         )
         if participant.cleared_at:
@@ -145,6 +145,7 @@ class MessageListCreateView(APIView):
             text=data.get("text", ""),
             reply_to=reply_to,
             metadata=metadata,
+            attachment_ids=[str(a) for a in data.get("attachment_ids", [])],
         )
         return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
 

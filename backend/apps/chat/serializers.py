@@ -28,6 +28,7 @@ class MessageSerializer(serializers.ModelSerializer):
     sender = PublicUserSerializer(read_only=True)
     reply_to = ReplyPreviewSerializer(read_only=True)
     reactions = serializers.SerializerMethodField()
+    attachments = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
@@ -39,6 +40,7 @@ class MessageSerializer(serializers.ModelSerializer):
             "text",
             "reply_to",
             "reactions",
+            "attachments",
             "is_edited",
             "edited_at",
             "deleted_for_everyone",
@@ -49,6 +51,12 @@ class MessageSerializer(serializers.ModelSerializer):
 
     def get_reactions(self, obj) -> list:
         return aggregate_reactions(obj)
+
+    def get_attachments(self, obj) -> list:
+        from apps.media.serializers import MediaFileSerializer
+
+        medias = [a.media for a in obj.attachments.all()]
+        return MediaFileSerializer(medias, many=True).data
 
 
 class ConversationSerializer(serializers.ModelSerializer):
@@ -118,6 +126,9 @@ class MessageCreateSerializer(serializers.Serializer):
         required=False, allow_blank=True, default="", trim_whitespace=False
     )
     reply_to = serializers.UUIDField(required=False, allow_null=True)
+    attachment_ids = serializers.ListField(
+        child=serializers.UUIDField(), required=False, default=list
+    )
     client_id = serializers.CharField(required=False, allow_blank=True)
 
 

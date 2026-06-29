@@ -23,6 +23,7 @@ from .models import (
     ConversationParticipant,
     ConversationType,
     Message,
+    MessageAttachment,
     MessageReaction,
     MessageType,
 )
@@ -90,13 +91,28 @@ class ChatService:
         reply_to=None,
         message_type=MessageType.TEXT,
         metadata=None,
+        attachment_ids=None,
     ) -> Message:
         cls._ensure_participant(conversation, sender)
         text = (text or "").strip()
-        if message_type == MessageType.TEXT and not text:
-            raise ValidationError("Message text cannot be empty.")
+        attachment_ids = list(dict.fromkeys(attachment_ids or []))  # de-dupe, keep order
+        if not text and not attachment_ids:
+            raise ValidationError("A message must have text or at least one attachment.")
         if reply_to is not None and reply_to.conversation_id != conversation.id:
             raise ValidationError("Cannot reply to a message from another conversation.")
+
+        medias = []
+        if attachment_ids:
+            from apps.media.models import MediaFile
+
+            found = {
+                str(m.id): m for m in MediaFile.objects.filter(pk__in=attachment_ids, owner=sender)
+            }
+            if len(found) != len(attachment_ids):
+                raise ValidationError("One or more attachments are invalid or not yours.")
+            medias = [found[str(aid)] for aid in attachment_ids]
+            message_type = medias[0].kind  # MediaKind values map 1:1 to MessageType
+
         message = Message.objects.create(
             conversation=conversation,
             sender=sender,
@@ -105,6 +121,8 @@ class ChatService:
             reply_to=reply_to,
             metadata=metadata or {},
         )
+        for order, media in enumerate(medias):
+            MessageAttachment.objects.create(message=message, media=media, order=order)
         conversation.touch_last_message(message.created_at)
         # The sender has, by definition, read up to their own message.
         ConversationParticipant.objects.filter(conversation=conversation, user=sender).update(
