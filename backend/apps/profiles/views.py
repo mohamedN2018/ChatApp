@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers as drf_serializers
 from rest_framework import status
 from rest_framework.exceptions import NotFound, PermissionDenied
-from rest_framework.generics import RetrieveAPIView, RetrieveUpdateAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, RetrieveUpdateAPIView
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -24,7 +26,10 @@ from .serializers import (
     PrivacySettingsSerializer,
     ProfileSerializer,
     ProfileUpdateSerializer,
+    PublicUserSerializer,
 )
+
+User = get_user_model()
 
 AVATAR_SIZE = (512, 512)
 COVER_SIZE = (1600, 600)
@@ -41,6 +46,28 @@ class MeProfileView(RetrieveUpdateAPIView):
         if self.request.method in ("PUT", "PATCH"):
             return ProfileUpdateSerializer
         return ProfileSerializer
+
+
+@extend_schema(tags=["profiles"])
+class UserSearchView(ListAPIView):
+    """Search users by username / display name (respects the `searchable` privacy)."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = PublicUserSerializer
+
+    def get_queryset(self):
+        q = self.request.query_params.get("q", "").strip()
+        if len(q) < 2:
+            return User.objects.none()
+        return (
+            User.objects.filter(
+                Q(username__icontains=q) | Q(display_name__icontains=q),
+                is_active=True,
+                privacy__searchable=True,
+            )
+            .exclude(id=self.request.user.id)
+            .select_related("profile")[:20]
+        )
 
 
 @extend_schema(tags=["profiles"])

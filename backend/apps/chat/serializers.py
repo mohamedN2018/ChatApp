@@ -64,6 +64,7 @@ class ConversationSerializer(serializers.ModelSerializer):
     last_message = serializers.SerializerMethodField()
     unread_count = serializers.SerializerMethodField()
     my_state = serializers.SerializerMethodField()
+    others_last_read = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
@@ -75,10 +76,20 @@ class ConversationSerializer(serializers.ModelSerializer):
             "last_message",
             "unread_count",
             "my_state",
+            "others_last_read",
             "last_message_at",
             "created_at",
         )
         read_only_fields = fields
+
+    def get_others_last_read(self, obj) -> str | None:
+        viewer = self.context["request"].user
+        reads = [
+            p.last_read_at
+            for p in obj.participants.all()
+            if p.user_id != viewer.id and p.last_read_at
+        ]
+        return max(reads).isoformat() if reads else None
 
     def _my_participant(self, obj):
         viewer = self.context["request"].user

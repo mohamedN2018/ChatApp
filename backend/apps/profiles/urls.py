@@ -14,6 +14,7 @@ urlpatterns = [
     path("me/cover/", views.CoverView.as_view(), name="me-cover"),
     path("me/privacy/", views.PrivacySettingsView.as_view(), name="me-privacy"),
     path("me/notifications/", views.NotificationSettingsView.as_view(), name="me-notifications"),
+    path("search/", views.UserSearchView.as_view(), name="search"),
     # Keep this last: a username path segment must not shadow the /me/ routes.
     path("<str:username>/", views.PublicProfileView.as_view(), name="public"),
 ]

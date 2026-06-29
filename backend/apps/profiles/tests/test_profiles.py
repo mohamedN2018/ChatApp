@@ -125,6 +125,22 @@ def test_avatar_upload_rejects_non_image(client_for, alice, tmp_path, settings):
     assert resp.status_code == 400
 
 
+def test_user_search_respects_searchable_and_min_length(client_for, alice, bob):
+    url = reverse("v1:profiles:search")
+    # Found by username.
+    resp = client_for(alice).get(url, {"q": "bob"})
+    assert resp.status_code == 200
+    assert "bob" in [u["username"] for u in resp.data["results"]]
+    # Too-short query returns nothing.
+    assert client_for(alice).get(url, {"q": "b"}).data["results"] == []
+    # Self is excluded.
+    assert "alice" not in [u["username"] for u in client_for(alice).get(url, {"q": "alice"}).data["results"]]
+    # Not searchable -> excluded.
+    bob.privacy.searchable = False
+    bob.privacy.save()
+    assert "bob" not in [u["username"] for u in client_for(alice).get(url, {"q": "bob"}).data["results"]]
+
+
 def test_privacy_and_notification_settings_update(client_for, alice):
     c = client_for(alice)
     resp = c.patch(

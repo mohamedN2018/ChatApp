@@ -3,7 +3,7 @@ import { useAuthStore } from '~/stores/auth'
 import { useUiStore } from '~/stores/ui'
 import {
   SunIcon, MoonIcon, ChatBubbleLeftRightIcon, ArrowRightOnRectangleIcon,
-  UserGroupIcon, UserCircleIcon, Cog6ToothIcon,
+  UserGroupIcon, UserCircleIcon, Cog6ToothIcon, UsersIcon,
 } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
@@ -19,6 +19,7 @@ const tabs = computed(() => {
   const base = [
     { to: '/', label: 'Chat', icon: ChatBubbleLeftRightIcon },
     { to: '/groups', label: 'Groups', icon: UserGroupIcon },
+    { to: '/people', label: 'People', icon: UsersIcon },
     { to: '/profile', label: 'Profile', icon: UserCircleIcon },
   ]
   if (auth.user?.is_staff) base.push({ to: '/admin', label: 'Admin', icon: Cog6ToothIcon })
@@ -84,5 +85,6 @@ function isActive(to: string) {
     <ClientOnly>
       <CallOverlay v-if="auth.isAuthenticated" />
     </ClientOnly>
+    <Toaster />
   </div>
 </template>

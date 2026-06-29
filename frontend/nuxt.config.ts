@@ -9,6 +9,7 @@ export default defineNuxtConfig({
   // module doesn't also inject a second base layer.
   tailwindcss: { cssPath: '~/assets/css/main.css' },
   app: {
+    pageTransition: { name: 'page', mode: 'out-in' },
     head: {
       title: 'ChatApp',
       htmlAttrs: { lang: 'en' },
