@@ -5,17 +5,18 @@ and access-controlled retrieval.
 
 from __future__ import annotations
 
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import ListAPIView
 from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import MediaFile, UploadSession
+from .models import MediaFile, MediaKind, UploadSession
 from .serializers import (
     DirectUploadSerializer,
     MediaFileSerializer,
@@ -23,6 +24,7 @@ from .serializers import (
     UploadSessionSerializer,
 )
 from .services import MediaService
+from .signing import unsign_media
 
 MAX_DIRECT_UPLOAD = 25 * 1024 * 1024  # 25 MB — larger files use chunked upload
 
@@ -59,6 +61,45 @@ class MediaDetailView(APIView):
         if not MediaService.can_access(request.user, media):
             raise PermissionDenied("You do not have access to this file.")
         return Response(MediaFileSerializer(media, context={"request": request}).data)
+
+
+_INLINE_KINDS = {MediaKind.IMAGE, MediaKind.VIDEO, MediaKind.AUDIO, MediaKind.VOICE}
+
+
+class _MediaServeView(APIView):
+    """Stream a media blob through the backend, authorised by a signed token in
+    the query string (so it works in <img>/<a> without an auth header)."""
+
+    permission_classes = [AllowAny]
+    authentication_classes: list = []
+    field = "file"
+
+    @extend_schema(
+        tags=["media"], parameters=[OpenApiParameter("token", str, OpenApiParameter.QUERY)]
+    )
+    def get(self, request, media_id):
+        if unsign_media(request.query_params.get("token", "")) != str(media_id):
+            raise PermissionDenied("Invalid or expired media link.")
+        media = get_object_or_404(MediaFile, pk=media_id)
+        file_field = getattr(media, self.field)
+        if not file_field:
+            raise Http404()
+        is_thumb = self.field == "thumbnail"
+        content_type = (
+            "image/webp" if is_thumb else (media.content_type or "application/octet-stream")
+        )
+        response = FileResponse(file_field.open("rb"), content_type=content_type)
+        disposition = "inline" if (is_thumb or media.kind in _INLINE_KINDS) else "attachment"
+        response["Content-Disposition"] = f'{disposition}; filename="{media.original_filename}"'
+        return response
+
+
+class MediaDownloadView(_MediaServeView):
+    field = "file"
+
+
+class MediaThumbnailView(_MediaServeView):
+    field = "thumbnail"
 
 
 @extend_schema(tags=["media"])

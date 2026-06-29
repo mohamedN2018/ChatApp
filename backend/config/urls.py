@@ -18,10 +18,12 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+from apps.common.fileserve import ServeFileView
 from apps.common.views import LivenessView, ReadinessView
 
 # --- API v1 -----------------------------------------------------------------
 api_v1_patterns = [
+    path("files/", ServeFileView.as_view(), name="file-serve"),
     path("accounts/", include("apps.accounts.urls")),
     path("profiles/", include("apps.profiles.urls")),
     path("social/", include("apps.social.urls")),

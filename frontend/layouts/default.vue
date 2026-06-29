@@ -11,12 +11,20 @@ const t = useT()
 <template>
   <div class="flex h-full flex-col">
     <header class="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white/80 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
-      <NuxtLink to="/" class="flex items-center gap-2 font-bold">
-        <span class="grid h-8 w-8 place-items-center rounded-xl bg-brand-600 text-white">
-          <ChatBubbleLeftRightIcon class="h-5 w-5" />
-        </span>
-        <span class="text-lg">{{ t('app.name') }}</span>
-      </NuxtLink>
+      <div class="flex items-center gap-4">
+        <NuxtLink to="/" class="flex items-center gap-2 font-bold">
+          <span class="grid h-8 w-8 place-items-center rounded-xl bg-brand-600 text-white">
+            <ChatBubbleLeftRightIcon class="h-5 w-5" />
+          </span>
+          <span class="hidden text-lg sm:block">{{ t('app.name') }}</span>
+        </NuxtLink>
+        <nav v-if="auth.isAuthenticated" class="flex items-center gap-1 text-sm font-medium">
+          <NuxtLink to="/" class="rounded-lg px-3 py-1.5 hover:bg-slate-200/60 dark:hover:bg-slate-800" active-class="text-brand-600">Chat</NuxtLink>
+          <NuxtLink to="/groups" class="rounded-lg px-3 py-1.5 hover:bg-slate-200/60 dark:hover:bg-slate-800" active-class="text-brand-600">Groups</NuxtLink>
+          <NuxtLink to="/profile" class="rounded-lg px-3 py-1.5 hover:bg-slate-200/60 dark:hover:bg-slate-800" active-class="text-brand-600">Profile</NuxtLink>
+          <NuxtLink v-if="auth.user?.is_staff" to="/admin" class="rounded-lg px-3 py-1.5 hover:bg-slate-200/60 dark:hover:bg-slate-800" active-class="text-brand-600">Admin</NuxtLink>
+        </nav>
+      </div>
 
       <div class="flex items-center gap-1.5">
         <button class="btn-ghost px-2.5" :title="ui.locale === 'ar' ? 'English' : 'العربية'"
@@ -44,5 +52,9 @@ const t = useT()
     <main class="min-h-0 flex-1">
       <slot />
     </main>
+
+    <ClientOnly>
+      <CallOverlay v-if="auth.isAuthenticated" />
+    </ClientOnly>
   </div>
 </template>

@@ -24,6 +24,9 @@ urlpatterns = [
         views.CompleteUploadView.as_view(),
         name="upload-complete",
     ),
+    # Signed, browser-usable streaming (no auth header needed).
+    path("<uuid:media_id>/download/", views.MediaDownloadView.as_view(), name="download"),
+    path("<uuid:media_id>/thumbnail/", views.MediaThumbnailView.as_view(), name="thumbnail"),
     # Keep last so it doesn't shadow the literal paths above.
     path("<uuid:media_id>/", views.MediaDetailView.as_view(), name="detail"),
 ]

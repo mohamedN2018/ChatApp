@@ -68,6 +68,24 @@ def test_direct_image_upload_is_processed(alice):
     assert media.size > 0
 
 
+def test_signed_download_url_streams_and_rejects_bad_token(alice):
+    upload = SimpleUploadedFile("pic.png", png_bytes(), content_type="image/png")
+    data = (
+        client_for(alice)
+        .post(reverse("v1:media:upload"), {"file": upload}, format="multipart")
+        .data
+    )
+    url = data["url"]
+    assert url.startswith("/api/v1/media/") and "token=" in url
+
+    # The signed URL works with no auth header (usable in <img>).
+    ok = APIClient().get(url)
+    assert ok.status_code == 200
+    # A tampered token is rejected.
+    bad = url.split("?")[0] + "?token=tampered"
+    assert APIClient().get(bad).status_code == 403
+
+
 def test_direct_non_image_upload_is_kind_file(alice):
     upload = SimpleUploadedFile("notes.txt", b"hello world", content_type="text/plain")
     resp = client_for(alice).post(reverse("v1:media:upload"), {"file": upload}, format="multipart")

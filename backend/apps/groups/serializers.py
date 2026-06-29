@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
+from apps.common.fileserve import signed_file_url
 from apps.profiles.serializers import PublicUserSerializer
 
 from .models import Channel, ChannelType, Group, GroupInvite, GroupMembership, GroupRole
@@ -54,10 +55,10 @@ class GroupSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_avatar_url(self, obj) -> str | None:
-        return obj.avatar.url if obj.avatar else None
+        return signed_file_url(obj.avatar)
 
     def get_banner_url(self, obj) -> str | None:
-        return obj.banner.url if obj.banner else None
+        return signed_file_url(obj.banner)
 
     def get_my_role(self, obj) -> str | None:
         viewer = self.context["request"].user

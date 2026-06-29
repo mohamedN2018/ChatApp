@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
-import { PaperAirplaneIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
+import {
+  PaperAirplaneIcon, PlusIcon, MagnifyingGlassIcon, PaperClipIcon, XMarkIcon, DocumentIcon,
+  PhoneIcon, VideoCameraIcon,
+} from '@heroicons/vue/24/solid'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -8,6 +11,12 @@ const { api } = useApi()
 const auth = useAuthStore()
 const ui = useUiStore()
 const t = useT()
+const mediaUrl = useMediaUrl()
+const call = useCall()
+
+const pending = ref<any[]>([])
+const uploading = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 const conversations = ref<any[]>([])
 const activeId = ref<string | null>(null)
@@ -86,15 +95,52 @@ async function startChat() {
   }
 }
 
+function pickFiles() {
+  fileInput.value?.click()
+}
+async function onFiles(e: Event) {
+  const files = Array.from((e.target as HTMLInputElement).files || [])
+  if (!files.length) return
+  uploading.value = true
+  try {
+    for (const file of files) {
+      const fd = new FormData()
+      fd.append('file', file)
+      const media = await api<any>('/media/upload/', { method: 'POST', body: fd })
+      pending.value.push(media)
+    }
+  } finally {
+    uploading.value = false
+    if (fileInput.value) fileInput.value.value = ''
+  }
+}
+function removePending(id: string) {
+  pending.value = pending.value.filter((m) => m.id !== id)
+}
+
 async function send() {
   const text = draft.value.trim()
-  if (!text || !activeId.value) return
+  const attachment_ids = pending.value.map((m) => m.id)
+  if ((!text && !attachment_ids.length) || !activeId.value) return
   draft.value = ''
+  const sent = pending.value
+  pending.value = []
   try {
-    await api(`/chat/conversations/${activeId.value}/messages/`, { method: 'POST', body: { text } })
+    await api(`/chat/conversations/${activeId.value}/messages/`, {
+      method: 'POST',
+      body: { text, attachment_ids },
+    })
   } catch {
     draft.value = text
+    pending.value = sent
   }
+}
+
+function startCall(video: boolean) {
+  if (activeId.value) call.start(activeId.value, video)
+}
+function openMedia(url: string) {
+  if (import.meta.client) window.open(url, '_blank')
 }
 
 let typingTimer: any
@@ -203,12 +249,14 @@ onUnmounted(() => {
           <div class="grid h-9 w-9 place-items-center rounded-full bg-brand-100 font-semibold text-brand-700 dark:bg-brand-700/30 dark:text-brand-100">
             {{ (otherUser(activeConv)?.username || '?').charAt(0).toUpperCase() }}
           </div>
-          <div>
+          <div class="flex-1">
             <p class="font-semibold leading-tight">@{{ otherUser(activeConv)?.username }}</p>
             <p class="text-xs text-slate-500">
               {{ presence[otherUser(activeConv)?.id] === 'online' ? t('common.online') : t('common.offline') }}
             </p>
           </div>
+          <button class="btn-ghost px-2" title="Voice call" @click="startCall(false)"><PhoneIcon class="h-5 w-5" /></button>
+          <button class="btn-ghost px-2" title="Video call" @click="startCall(true)"><VideoCameraIcon class="h-5 w-5" /></button>
         </header>
 
         <div ref="threadEl" class="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
@@ -217,7 +265,17 @@ onUnmounted(() => {
               :class="isMine(m)
                 ? 'bg-brand-600 text-white rounded-ee-md'
                 : 'bg-white text-slate-800 dark:bg-slate-800 dark:text-slate-100 rounded-es-md'">
-              <p class="whitespace-pre-wrap break-words">
+              <div v-if="m.attachments?.length" class="mb-1 space-y-1.5">
+                <template v-for="a in m.attachments" :key="a.id">
+                  <img v-if="a.kind === 'image'" :src="mediaUrl(a.thumbnail_url || a.url)"
+                    class="max-h-52 max-w-full cursor-pointer rounded-lg" @click="openMedia(mediaUrl(a.url))" />
+                  <a v-else :href="mediaUrl(a.url)" target="_blank"
+                    class="flex items-center gap-2 rounded-lg bg-black/10 px-2.5 py-1.5 text-xs hover:underline dark:bg-white/10">
+                    <DocumentIcon class="h-4 w-4 shrink-0" /> <span class="truncate">{{ a.original_filename }}</span>
+                  </a>
+                </template>
+              </div>
+              <p v-if="m.text || m.deleted_for_everyone" class="whitespace-pre-wrap break-words">
                 <span v-if="m.deleted_for_everyone" class="italic opacity-60">deleted</span>
                 <span v-else>{{ m.text }}</span>
               </p>
@@ -227,12 +285,27 @@ onUnmounted(() => {
           <p v-if="someoneTyping" class="text-xs text-slate-400">{{ t('chat.typing') }}</p>
         </div>
 
-        <form class="flex items-center gap-2 border-t border-slate-200 p-3 dark:border-slate-800" @submit.prevent="send">
-          <input v-model="draft" class="input" :placeholder="t('chat.placeholder')" @input="onInput" />
-          <button class="btn-primary px-3" :disabled="!draft.trim()">
-            <PaperAirplaneIcon class="h-5 w-5" :class="ui.dir === 'rtl' ? 'rotate-180' : ''" />
-          </button>
-        </form>
+        <div class="border-t border-slate-200 dark:border-slate-800">
+          <div v-if="pending.length || uploading" class="flex flex-wrap gap-2 px-3 pt-2">
+            <div v-for="m in pending" :key="m.id" class="relative">
+              <img v-if="m.kind === 'image'" :src="mediaUrl(m.thumbnail_url || m.url)" class="h-14 w-14 rounded-lg object-cover" />
+              <div v-else class="grid h-14 w-14 place-items-center rounded-lg bg-slate-200 text-[10px] dark:bg-slate-700">
+                <DocumentIcon class="h-5 w-5" />
+              </div>
+              <button class="absolute -end-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-slate-700 text-white"
+                @click="removePending(m.id)"><XMarkIcon class="h-3 w-3" /></button>
+            </div>
+            <div v-if="uploading" class="grid h-14 w-14 place-items-center rounded-lg bg-slate-100 text-xs text-slate-400 dark:bg-slate-800">…</div>
+          </div>
+          <form class="flex items-center gap-2 p-3" @submit.prevent="send">
+            <input ref="fileInput" type="file" multiple class="hidden" @change="onFiles" />
+            <button type="button" class="btn-ghost px-2" title="Attach" @click="pickFiles"><PaperClipIcon class="h-5 w-5" /></button>
+            <input v-model="draft" class="input" :placeholder="t('chat.placeholder')" @input="onInput" />
+            <button class="btn-primary px-3" :disabled="!draft.trim() && !pending.length">
+              <PaperAirplaneIcon class="h-5 w-5" :class="ui.dir === 'rtl' ? 'rotate-180' : ''" />
+            </button>
+          </form>
+        </div>
       </template>
 
       <div v-else class="grid flex-1 place-items-center text-slate-400">

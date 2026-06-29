@@ -45,6 +45,7 @@ class UserSerializer(serializers.ModelSerializer):
             "display_name",
             "is_email_verified",
             "is_verified",
+            "is_staff",
             "last_seen_at",
             "created_at",
         )

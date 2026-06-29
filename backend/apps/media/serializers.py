@@ -5,6 +5,7 @@ from __future__ import annotations
 from rest_framework import serializers
 
 from .models import MediaFile, UploadSession
+from .signing import sign_media
 
 
 class MediaFileSerializer(serializers.ModelSerializer):
@@ -31,10 +32,16 @@ class MediaFileSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_url(self, obj) -> str | None:
-        return obj.file.url if obj.file else None
+        # Backend-served, signed, browser-usable URL (resolved against the API
+        # origin by the client). Avoids MinIO's internal-host presigned URLs.
+        if not obj.file:
+            return None
+        return f"/api/v1/media/{obj.id}/download/?token={sign_media(obj.id)}"
 
     def get_thumbnail_url(self, obj) -> str | None:
-        return obj.thumbnail.url if obj.thumbnail else None
+        if not obj.thumbnail:
+            return None
+        return f"/api/v1/media/{obj.id}/thumbnail/?token={sign_media(obj.id)}"
 
 
 class DirectUploadSerializer(serializers.Serializer):

@@ -7,6 +7,7 @@ export interface User {
   display_name: string
   is_email_verified: boolean
   is_verified: boolean
+  is_staff?: boolean
 }
 
 interface RegisterPayload {
@@ -53,6 +54,12 @@ export const useAuthStore = defineStore('auth', {
     },
     async register(payload: RegisterPayload) {
       return await $fetch(`${this.base()}/accounts/register/`, { method: 'POST', body: payload })
+    },
+    async fetchMe() {
+      this.user = await $fetch<User>(`${this.base()}/accounts/me/`, {
+        headers: { Authorization: `Bearer ${this.access}` },
+      })
+      this.persist()
     },
     async refreshTokens() {
       if (!this.refresh) throw new Error('no refresh token')

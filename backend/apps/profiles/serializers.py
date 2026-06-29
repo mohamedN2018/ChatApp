@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
+from apps.common.fileserve import signed_file_url
 from apps.social.services import SocialService
 
 from .models import NotificationSettings, PrivacySettings, Profile
@@ -20,17 +21,15 @@ class PublicUserSerializer(serializers.Serializer):
 
     def get_avatar(self, user) -> str | None:
         profile = getattr(user, "profile", None)
-        if profile and profile.avatar:
-            return profile.avatar.url
-        return None
+        return signed_file_url(profile.avatar) if profile else None
 
 
 class ProfileSerializer(serializers.ModelSerializer):
     """Full profile view, including viewer-relative relationship state."""
 
     user = PublicUserSerializer(read_only=True)
-    avatar = serializers.ImageField(read_only=True)
-    cover = serializers.ImageField(read_only=True)
+    avatar = serializers.SerializerMethodField()
+    cover = serializers.SerializerMethodField()
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
     relationship = serializers.SerializerMethodField()
@@ -55,6 +54,12 @@ class ProfileSerializer(serializers.ModelSerializer):
             "relationship",
         )
         read_only_fields = fields
+
+    def get_avatar(self, obj) -> str | None:
+        return signed_file_url(obj.avatar)
+
+    def get_cover(self, obj) -> str | None:
+        return signed_file_url(obj.cover)
 
     def get_followers_count(self, obj) -> int:
         return obj.user.follower_set.count()
