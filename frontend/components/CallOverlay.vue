@@ -1,12 +1,22 @@
 <script setup lang="ts">
-import { PhoneXMarkIcon, MicrophoneIcon, VideoCameraIcon, VideoCameraSlashIcon, PhoneIcon } from '@heroicons/vue/24/solid'
+import {
+  PhoneXMarkIcon, MicrophoneIcon, VideoCameraIcon, VideoCameraSlashIcon, PhoneIcon,
+  ComputerDesktopIcon,
+} from '@heroicons/vue/24/solid'
 
 const call = useCall()
+const sound = useSound()
 const localVideo = ref<HTMLVideoElement | null>(null)
 const remoteVideo = ref<HTMLVideoElement | null>(null)
 
 // Connect the call socket so incoming calls arrive even when idle.
 onMounted(() => call.listen())
+
+// Ring while a call is incoming; stop once answered/declined/ended.
+watch(call.status, (s) => {
+  if (s === 'incoming') sound.ringStart()
+  else sound.ringStop()
+})
 
 watch(call.localStream, (s) => {
   if (localVideo.value) localVideo.value.srcObject = s
@@ -56,11 +66,15 @@ watch(call.remoteStream, (s) => {
         <MicrophoneIcon class="h-6 w-6" />
       </button>
       <button v-if="call.type.value === 'video'" class="grid h-12 w-12 place-items-center rounded-full"
-        :class="call.videoOff.value ? 'bg-white text-slate-900' : 'bg-white/15'" @click="call.toggleVideo()">
+        :class="call.videoOff.value ? 'bg-white text-slate-900' : 'bg-white/15'" @click="call.toggleVideo()" title="Camera">
         <VideoCameraSlashIcon v-if="call.videoOff.value" class="h-6 w-6" />
         <VideoCameraIcon v-else class="h-6 w-6" />
       </button>
-      <button class="grid h-14 w-14 place-items-center rounded-full bg-red-500" @click="call.hangup()">
+      <button class="grid h-12 w-12 place-items-center rounded-full"
+        :class="call.isScreenSharing.value ? 'bg-brand-500' : 'bg-white/15'" @click="call.toggleScreenShare()" title="Share screen">
+        <ComputerDesktopIcon class="h-6 w-6" />
+      </button>
+      <button class="grid h-14 w-14 place-items-center rounded-full bg-red-500" @click="call.hangup()" title="End call">
         <PhoneXMarkIcon class="h-7 w-7" />
       </button>
     </div>

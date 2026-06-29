@@ -23,12 +23,14 @@ from .tasks import process_media_task
 class MediaService:
     # ------------------------------------------------------------- direct upload
     @staticmethod
-    def create_from_file(*, owner, django_file, filename=None, content_type=None) -> MediaFile:
+    def create_from_file(
+        *, owner, django_file, filename=None, content_type=None, kind=None
+    ) -> MediaFile:
         filename = (filename or getattr(django_file, "name", "file"))[:255]
         content_type = (content_type or getattr(django_file, "content_type", "") or "")[:150]
         media = MediaFile(
             owner=owner,
-            kind=MediaFile.kind_for_content_type(content_type, filename),
+            kind=kind or MediaFile.kind_for_content_type(content_type, filename),
             original_filename=filename,
             content_type=content_type,
         )

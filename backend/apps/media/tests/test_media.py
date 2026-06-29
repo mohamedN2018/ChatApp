@@ -86,6 +86,15 @@ def test_signed_download_url_streams_and_rejects_bad_token(alice):
     assert APIClient().get(bad).status_code == 403
 
 
+def test_upload_with_kind_override_marks_voice(alice):
+    upload = SimpleUploadedFile("v.webm", b"fakeaudiobytes", content_type="audio/webm")
+    resp = client_for(alice).post(
+        reverse("v1:media:upload"), {"file": upload, "kind": "voice"}, format="multipart"
+    )
+    assert resp.status_code == 201
+    assert resp.data["kind"] == "voice"  # client-specified, not derived from audio/*
+
+
 def test_direct_non_image_upload_is_kind_file(alice):
     upload = SimpleUploadedFile("notes.txt", b"hello world", content_type="text/plain")
     resp = client_for(alice).post(reverse("v1:media:upload"), {"file": upload}, format="multipart")

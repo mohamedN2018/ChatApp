@@ -15,8 +15,10 @@ function createCall() {
   const remoteStream = ref<MediaStream | null>(null)
   const muted = ref(false)
   const videoOff = ref(false)
+  const isScreenSharing = ref(false)
 
   let pc: RTCPeerConnection | null = null
+  let screenStream: MediaStream | null = null
   let remoteUserId = ''
   let iceServers: RTCIceServer[] = [{ urls: ['stun:stun.l.google.com:19302'] }]
   const socket = useSocket('/ws/calls/')
@@ -146,6 +148,8 @@ function createCall() {
     pc?.close()
     pc = null
     localStream.value?.getTracks().forEach((t) => t.stop())
+    screenStream?.getTracks().forEach((t) => t.stop())
+    screenStream = null
     localStream.value = null
     remoteStream.value = null
     remoteUserId = ''
@@ -153,6 +157,7 @@ function createCall() {
     incoming.value = null
     muted.value = false
     videoOff.value = false
+    isScreenSharing.value = false
     status.value = 'idle'
   }
 
@@ -167,13 +172,48 @@ function createCall() {
     socket.send({ action: 'state', call_id: callId.value, is_video_on: !videoOff.value })
   }
 
+  async function renegotiate() {
+    if (!pc) return
+    const offer = await pc.createOffer()
+    await pc.setLocalDescription(offer)
+    sendSignal(offer)
+  }
+
+  async function toggleScreenShare() {
+    if (isScreenSharing.value) return stopScreen()
+    try {
+      screenStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true })
+    } catch {
+      return
+    }
+    const track = screenStream!.getVideoTracks()[0]
+    track.onended = () => stopScreen()
+    const sender = pc?.getSenders().find((s) => s.track?.kind === 'video')
+    if (sender) {
+      await sender.replaceTrack(track)
+    } else if (pc) {
+      pc.addTrack(track, screenStream!)
+      await renegotiate()
+    }
+    isScreenSharing.value = true
+  }
+
+  function stopScreen() {
+    if (!isScreenSharing.value) return
+    const cam = localStream.value?.getVideoTracks()[0] || null
+    pc?.getSenders().find((s) => s.track?.kind === 'video')?.replaceTrack(cam)
+    screenStream?.getTracks().forEach((t) => t.stop())
+    screenStream = null
+    isScreenSharing.value = false
+  }
+
   function listen() {
     socket.connect()
   }
 
   return {
-    status, type, incoming, localStream, remoteStream, muted, videoOff,
-    start, accept, reject, hangup, toggleMute, toggleVideo, listen,
+    status, type, incoming, localStream, remoteStream, muted, videoOff, isScreenSharing,
+    start, accept, reject, hangup, toggleMute, toggleVideo, toggleScreenShare, listen,
   }
 }
 

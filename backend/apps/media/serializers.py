@@ -46,6 +46,11 @@ class MediaFileSerializer(serializers.ModelSerializer):
 
 class DirectUploadSerializer(serializers.Serializer):
     file = serializers.FileField()
+    # Optional override so the client can mark a recording as a voice note
+    # (enables waveform extraction); otherwise the kind is derived from the type.
+    kind = serializers.ChoiceField(
+        choices=MediaFile._meta.get_field("kind").choices, required=False, allow_null=True
+    )
 
 
 class StartUploadSerializer(serializers.Serializer):

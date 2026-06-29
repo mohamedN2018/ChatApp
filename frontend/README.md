@@ -7,11 +7,15 @@ A Nuxt 3 + TypeScript + TailwindCSS + Pinia client for the ChatApp API.
 * **Auth** — login / register / logout with JWT, automatic access-token refresh,
   and persisted sessions (`stores/auth.ts`, `composables/useApi.ts`).
 * **Realtime chat** — conversation list, message thread, optimistic send, live
-  delivery + typing, and **image/file attachments** (`pages/index.vue`).
+  delivery + typing, **reply**, **emoji reactions**, **voice notes** (record →
+  waveform), and **image / video / file attachments** with inline players
+  (`pages/index.vue`).
+* **Notifications** — desktop notifications + a sound chime on new messages when
+  the tab isn't focused (`composables/useSound.ts`, `useNotifications.ts`).
 * **Presence** — online/away/busy dots driven by the presence WebSocket.
 * **WebRTC calls** — 1:1 audio/video with SDP/ICE over the call WebSocket, an
-  incoming-call overlay, and mute/video/hangup controls (`composables/useCall.ts`,
-  `components/CallOverlay.vue`).
+  incoming-call overlay with **ringtone**, **screen sharing**, and mute / camera /
+  hangup controls (`composables/useCall.ts`, `components/CallOverlay.vue`).
 * **Groups & channels** — create/join/discover, channels, realtime channel chat
   (`pages/groups.vue`).
 * **Profile & settings** — edit profile, avatar upload, privacy + notification

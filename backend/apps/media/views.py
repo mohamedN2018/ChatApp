@@ -44,7 +44,9 @@ class DirectUploadView(APIView):
                 {"detail": "File too large for direct upload; use the chunked upload endpoints."},
                 status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             )
-        media = MediaService.create_from_file(owner=request.user, django_file=upload)
+        media = MediaService.create_from_file(
+            owner=request.user, django_file=upload, kind=serializer.validated_data.get("kind")
+        )
         return Response(
             MediaFileSerializer(media, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
