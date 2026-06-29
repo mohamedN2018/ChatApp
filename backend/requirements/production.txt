@@ -1,0 +1,12 @@
+# ---------------------------------------------------------------------------
+# Production server stack (Linux containers only). uvloop/httptools are not
+# available on Windows, which is why they live here and not in base.txt.
+# ---------------------------------------------------------------------------
+-r base.txt
+
+# --- ASGI server ---
+gunicorn>=23.0,<24.0
+uvicorn[standard]>=0.34,<1.0      # UvicornWorker for gunicorn (uvloop, httptools)
+
+# --- Observability ---
+sentry-sdk>=2.19,<3.0

@@ -1,0 +1,42 @@
+# ---------------------------------------------------------------------------
+# Core runtime dependencies (cross-platform: Linux containers + local Windows).
+# Pinned to compatible-release ranges so patch updates flow but minors are
+# deliberate. See requirements/development.txt and production.txt for extras.
+# ---------------------------------------------------------------------------
+
+# --- Framework ---
+Django>=5.2,<5.3
+djangorestframework>=3.16,<3.17
+django-cors-headers>=4.6,<5.0
+django-filter>=25.1,<26.0
+
+# --- Auth ---
+djangorestframework-simplejwt>=5.4,<6.0
+argon2-cffi>=23.1,<25.0           # Argon2 password hashing (preferred hasher)
+
+# --- Realtime (ASGI / WebSockets) ---
+channels>=4.2,<5.0
+channels-redis>=4.2,<5.0
+daphne>=4.1,<5.0                  # ASGI server used by runserver in dev
+
+# --- Async task queue ---
+celery>=5.4,<6.0
+django-celery-beat>=2.7,<3.0      # DB-backed periodic task scheduler
+redis>=5.2,<6.0                   # broker / cache / channel layer client
+
+# --- Database ---
+psycopg[binary]>=3.2,<4.0         # PostgreSQL driver (psycopg 3)
+
+# --- Object storage (MinIO / S3-compatible) ---
+django-storages>=1.14,<2.0
+boto3>=1.35,<2.0
+
+# --- Media processing ---
+Pillow>=11.0,<12.0                # image thumbnails / EXIF handling
+
+# --- API schema / docs ---
+drf-spectacular>=0.28,<0.29
+
+# --- Configuration & utilities ---
+django-environ>=0.12,<0.13        # 12-factor env parsing
+whitenoise>=6.8,<7.0              # static file serving (with compression)

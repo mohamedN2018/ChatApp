@@ -1,0 +1,40 @@
+[project]
+name = "chatapp-backend"
+version = "0.1.0"
+description = "Production-grade real-time messaging platform — Django backend."
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "*_test.py", "tests.py"]
+addopts = "-ra --strict-markers --reuse-db"
+testpaths = ["apps"]
+filterwarnings = ["ignore::DeprecationWarning"]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+source = ["apps"]
+omit = ["*/migrations/*", "*/tests/*", "manage.py", "config/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "DJ", "SIM"]
+ignore = ["B008"]  # function call in argument defaults (common DRF/Django idiom)
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["mypy_django_plugin.main"]
+ignore_missing_imports = true
+check_untyped_defs = true
+exclude = ["migrations", "tests"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
