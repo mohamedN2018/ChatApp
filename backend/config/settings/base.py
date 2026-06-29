@@ -64,6 +64,7 @@ LOCAL_APPS = [
     "apps.media",
     "apps.chat",
     "apps.groups",
+    "apps.calls",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -291,6 +292,20 @@ if USE_S3:
             "addressing_style": "path",
         },
     }
+
+# --- WebRTC (calls) ---------------------------------------------------------
+# Public STUN by default; add a TURN server (e.g. coturn) for clients behind
+# symmetric NATs by setting WEBRTC_TURN_URL / USERNAME / CREDENTIAL.
+WEBRTC_ICE_SERVERS = [{"urls": ["stun:stun.l.google.com:19302"]}]
+_turn_url = env("WEBRTC_TURN_URL", default="")
+if _turn_url:
+    WEBRTC_ICE_SERVERS.append(
+        {
+            "urls": [_turn_url],
+            "username": env("WEBRTC_TURN_USERNAME", default=""),
+            "credential": env("WEBRTC_TURN_CREDENTIAL", default=""),
+        }
+    )
 
 # --- Email (overridden per environment) -------------------------------------
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="ChatApp <no-reply@chatapp.local>")

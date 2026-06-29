@@ -29,6 +29,7 @@ api_v1_patterns = [
     path("chat/", include("apps.chat.urls")),
     path("media/", include("apps.media.urls")),
     path("groups/", include("apps.groups.urls")),
+    path("calls/", include("apps.calls.urls")),
 ]
 
 urlpatterns = [

@@ -4,10 +4,10 @@ A production-grade, self-hostable messaging platform (Discord/Telegram/Slack-cla
 built on Django 5, Django Channels, PostgreSQL, Redis, Celery, and a Nuxt 3 frontend.
 Everything runs on free and open-source software.
 
-> **Status — Phases 0–5 complete** (Foundation, Authentication, Profiles/Social/
-> Presence, Realtime 1:1 Chat, Media/Files, and Groups/Channels). The platform is
-> built as a sequence of complete, verified vertical slices. See the
-> [Roadmap](#roadmap) for what is done and what's next.
+> **Status — Phases 0–6 complete** (Foundation, Authentication, Profiles/Social/
+> Presence, Realtime 1:1 Chat, Media/Files, Groups/Channels, and Voice/Video
+> Calls). The platform is built as a sequence of complete, verified vertical
+> slices. See the [Roadmap](#roadmap) for what is done and what's next.
 
 ---
 
@@ -171,7 +171,11 @@ The build proceeds one complete, verified slice at a time.
   max-uses), text/voice/video/announcement channels backed by conversations
   (so channels reuse the chat realtime pipeline), avatar/banner, member
   management, ownership transfer, and public discovery.
-- [ ] **Phase 6 — Voice & video calls:** WebRTC signaling, 1:1 then group (SFU).
+- [x] **Phase 6 — Voice & video calls:** WebRTC signaling over a JWT WebSocket
+  (`ws/calls/`) relaying SDP/ICE peer-to-peer (mesh), full call lifecycle
+  (ring → accept/reject → ongoing → end, with missed/cancelled), call history,
+  per-peer mute/video/raise-hand state, and ICE-server config (STUN; TURN via
+  env). *(Large group calls would add an SFU — noted for production.)*
 - [ ] **Phase 7 — Admin, i18n, hardening:** admin panel, Arabic/English RTL, security pass, load tests.
 - [ ] **Phase 8 — Frontend:** Nuxt 3 app consuming the full API.
 

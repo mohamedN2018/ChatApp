@@ -174,6 +174,23 @@ Key mechanisms:
   search. DM list endpoints are filtered to `direct` conversations so channels
   don't leak into the inbox.
 
+## Voice & video calls (Phase 6)
+
+* **Signaling, not media.** The server is the signaling + state plane: it tracks
+  who's in a call and relays WebRTC SDP/ICE between peers over `ws/calls/`. Media
+  flows peer-to-peer (mesh) and never reaches the server.
+* **Per-socket + per-room fan-out.** Each socket joins `call.user.{id}` (incoming
+  calls + targeted signaling) and, while in a call, `call.room.{id}` (peer join/
+  leave/state). `signal` is relayed to a specific peer's personal group; `state`
+  (mute/video/raise-hand) broadcasts to the room.
+* **Lifecycle in `CallService`:** initiate (RINGING) → join (ONGOING, sets
+  `started_at`) / reject → leave/end. A call auto-terminates when the last
+  participant leaves (ENDED if it connected, else MISSED); a 1:1 reject ends it.
+  Verified live: initiate → accept → end with duration recorded.
+* **ICE** servers come from `GET /calls/ice-servers/` (public STUN by default;
+  a TURN server is added via `WEBRTC_TURN_URL`). Mesh suits 1:1 and small groups;
+  large group calls would introduce an SFU — out of scope here, noted for prod.
+
 ## Redis: three roles, three logical DBs
 
 | DB | Role |

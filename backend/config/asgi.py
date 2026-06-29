@@ -20,11 +20,12 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
 # importing consumers/middleware that touch models.
 django_asgi_app = get_asgi_application()
 
+from apps.calls.routing import websocket_urlpatterns as calls_ws  # noqa: E402
 from apps.chat.routing import websocket_urlpatterns as chat_ws  # noqa: E402
 from apps.realtime.middleware import JWTAuthMiddleware  # noqa: E402
 from apps.realtime.routing import websocket_urlpatterns as presence_ws  # noqa: E402
 
-websocket_urlpatterns = presence_ws + chat_ws
+websocket_urlpatterns = presence_ws + chat_ws + calls_ws
 
 application = ProtocolTypeRouter(
     {
