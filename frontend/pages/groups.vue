@@ -15,8 +15,12 @@ const newGroup = ref('')
 const inviteCode = ref('')
 const newChannel = ref('')
 const tab = ref<'mine' | 'discover'>('mine')
+const hideTabbar = useState('hideTabbar', () => false)
 
 const chatSocket = useSocket('/ws/chat/')
+
+// Hide the mobile tab bar while a group is open (list ↔ detail).
+watch(active, (v) => (hideTabbar.value = !!v))
 
 async function loadGroups() {
   groups.value = await api<any[]>('/groups/')
@@ -82,12 +86,16 @@ onMounted(async () => {
   })
   await loadGroups()
 })
-onUnmounted(() => chatSocket.close())
+onUnmounted(() => {
+  chatSocket.close()
+  hideTabbar.value = false
+})
 </script>
 
 <template>
   <div class="mx-auto flex h-full max-w-6xl">
-    <aside class="flex w-72 shrink-0 flex-col border-e border-slate-200 dark:border-slate-800">
+    <aside class="w-full shrink-0 flex-col border-e border-slate-200 dark:border-slate-800 md:flex md:w-72"
+      :class="active ? 'hidden md:flex' : 'flex'">
       <div class="space-y-2 p-3">
         <div class="flex gap-1 rounded-xl bg-slate-100 p-1 text-sm dark:bg-slate-800">
           <button class="flex-1 rounded-lg py-1.5" :class="tab === 'mine' ? 'bg-white shadow dark:bg-slate-700' : ''" @click="tab = 'mine'">My groups</button>
@@ -127,22 +135,23 @@ onUnmounted(() => chatSocket.close())
       </div>
     </aside>
 
-    <section class="flex min-w-0 flex-1 flex-col">
+    <section class="min-w-0 flex-1 flex-col" :class="active ? 'flex' : 'hidden md:flex'">
       <template v-if="active">
         <header class="flex h-14 items-center gap-3 border-b border-slate-200 px-4 dark:border-slate-800">
+          <button class="btn-ghost px-2 md:hidden" @click="active = null">←</button>
           <p class="font-bold">{{ active.name }}</p>
           <span class="flex items-center gap-1 text-xs text-slate-500"><UsersIcon class="h-4 w-4" />{{ active.member_count }}</span>
         </header>
-        <div class="flex min-h-0 flex-1">
-          <!-- Channels -->
-          <div class="w-48 shrink-0 space-y-1 overflow-y-auto border-e border-slate-200 p-2 dark:border-slate-800">
+        <div class="flex min-h-0 flex-1 flex-col md:flex-row">
+          <!-- Channels: horizontal row on mobile, sidebar on desktop -->
+          <div class="flex shrink-0 gap-1 overflow-x-auto border-b border-slate-200 p-2 dark:border-slate-800 md:w-48 md:flex-col md:overflow-x-visible md:overflow-y-auto md:border-b-0 md:border-e">
             <button v-for="ch in active.channels" :key="ch.id"
-              class="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
+              class="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 md:w-full"
               :class="activeChannel?.id === ch.id ? 'bg-slate-100 font-semibold dark:bg-slate-800' : ''" @click="openChannel(ch)">
               <HashtagIcon class="h-4 w-4 text-slate-400" />{{ ch.name }}
             </button>
-            <form class="flex gap-1 pt-1" @submit.prevent="addChannel">
-              <input v-model="newChannel" class="input px-2 py-1 text-xs" placeholder="new-channel" />
+            <form class="flex shrink-0 gap-1 md:pt-1" @submit.prevent="addChannel">
+              <input v-model="newChannel" class="input w-28 px-2 py-1 text-xs md:w-auto" placeholder="new-channel" />
               <button class="btn-ghost px-2 py-1"><PlusIcon class="h-4 w-4" /></button>
             </form>
           </div>

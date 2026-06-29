@@ -57,7 +57,7 @@ onMounted(loadOverview)
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl p-4 sm:p-6">
+  <div class="mx-auto h-full max-w-5xl overflow-y-auto p-4 pb-8 sm:p-6">
     <h1 class="mb-4 text-2xl font-bold">Admin</h1>
     <p v-if="denied" class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-500/10">
       You need staff privileges to view the admin panel.

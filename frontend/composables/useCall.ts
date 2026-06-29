@@ -11,6 +11,8 @@ function createCall() {
   const callId = ref('')
   const type = ref<'audio' | 'video'>('audio')
   const incoming = ref<any>(null)
+  const peer = ref<any>(null)
+  const duration = ref(0)
   const localStream = ref<MediaStream | null>(null)
   const remoteStream = ref<MediaStream | null>(null)
   const muted = ref(false)
@@ -20,6 +22,13 @@ function createCall() {
   let pc: RTCPeerConnection | null = null
   let screenStream: MediaStream | null = null
   let remoteUserId = ''
+  let durationTimer: any = null
+  let currentCameraId = ''
+
+  function markOngoing() {
+    status.value = 'ongoing'
+    if (!durationTimer) durationTimer = setInterval(() => (duration.value += 1), 1000)
+  }
   let iceServers: RTCIceServer[] = [{ urls: ['stun:stun.l.google.com:19302'] }]
   const socket = useSocket('/ws/calls/')
 
@@ -39,6 +48,30 @@ function createCall() {
       audio: true,
       video: type.value === 'video',
     })
+    currentCameraId = localStream.value.getVideoTracks()[0]?.getSettings().deviceId || ''
+  }
+
+  async function switchCamera() {
+    if (type.value !== 'video' || !pc) return
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const cams = devices.filter((d) => d.kind === 'videoinput')
+    if (cams.length < 2) return
+    const idx = cams.findIndex((c) => c.deviceId === currentCameraId)
+    const next = cams[(idx + 1) % cams.length]
+    const fresh = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: next.deviceId } } })
+    const track = fresh.getVideoTracks()[0]
+    currentCameraId = next.deviceId
+    if (!isScreenSharing.value) {
+      pc.getSenders().find((s) => s.track?.kind === 'video')?.replaceTrack(track)
+    }
+    // Swap the track in the local preview stream.
+    const old = localStream.value?.getVideoTracks()[0]
+    if (old && localStream.value) {
+      localStream.value.removeTrack(old)
+      old.stop()
+      localStream.value.addTrack(track)
+      localStream.value = new MediaStream(localStream.value.getTracks())
+    }
   }
 
   function newPc() {
@@ -48,7 +81,7 @@ function createCall() {
     }
     pc.ontrack = (e) => {
       remoteStream.value = e.streams[0]
-      status.value = 'ongoing'
+      markOngoing()
     }
     localStream.value?.getTracks().forEach((tr) => pc!.addTrack(tr, localStream.value!))
   }
@@ -62,6 +95,7 @@ function createCall() {
       case 'call.incoming':
         if (status.value === 'idle') {
           incoming.value = evt.call
+          peer.value = evt.call.initiator
           callId.value = evt.call.id
           type.value = evt.call.type
           status.value = 'incoming'
@@ -105,8 +139,9 @@ function createCall() {
     }
   }
 
-  async function start(conversationId: string, video: boolean) {
+  async function start(conversationId: string, video: boolean, peerInfo: any = null) {
     if (status.value !== 'idle') return
+    peer.value = peerInfo
     type.value = video ? 'video' : 'audio'
     await loadIce()
     socket.connect()
@@ -153,8 +188,13 @@ function createCall() {
     localStream.value = null
     remoteStream.value = null
     remoteUserId = ''
+    currentCameraId = ''
     callId.value = ''
     incoming.value = null
+    peer.value = null
+    clearInterval(durationTimer)
+    durationTimer = null
+    duration.value = 0
     muted.value = false
     videoOff.value = false
     isScreenSharing.value = false
@@ -212,8 +252,9 @@ function createCall() {
   }
 
   return {
-    status, type, incoming, localStream, remoteStream, muted, videoOff, isScreenSharing,
-    start, accept, reject, hangup, toggleMute, toggleVideo, toggleScreenShare, listen,
+    status, type, incoming, peer, duration, localStream, remoteStream, muted, videoOff,
+    isScreenSharing,
+    start, accept, reject, hangup, toggleMute, toggleVideo, toggleScreenShare, switchCamera, listen,
   }
 }
 

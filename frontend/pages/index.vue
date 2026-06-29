@@ -2,7 +2,7 @@
 import { useAuthStore } from '~/stores/auth'
 import {
   PaperAirplaneIcon, PlusIcon, MagnifyingGlassIcon, PaperClipIcon, XMarkIcon, DocumentIcon,
-  PhoneIcon, VideoCameraIcon, MicrophoneIcon, StopIcon, FaceSmileIcon, ArrowUturnLeftIcon,
+  PhoneIcon, VideoCameraIcon, MicrophoneIcon, FaceSmileIcon, ArrowUturnLeftIcon,
 } from '@heroicons/vue/24/solid'
 
 definePageMeta({ middleware: 'auth' })
@@ -15,6 +15,7 @@ const mediaUrl = useMediaUrl()
 const call = useCall()
 const sound = useSound()
 const notifications = useNotifications()
+const hideTabbar = useState('hideTabbar', () => false)
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏']
 
@@ -33,14 +34,49 @@ const uploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const replyingTo = ref<any>(null)
 const pickerFor = ref<string | null>(null)
+const showEmoji = ref(false)
+
+function addEmoji(e: string) {
+  draft.value += e
+}
 
 // Voice recording
 const recording = ref(false)
 const recordSecs = ref(0)
+const recordLevels = ref<number[]>(new Array(28).fill(0))
 let recorder: MediaRecorder | null = null
 let recordChunks: Blob[] = []
 let recordTimer: any = null
 let recordStream: MediaStream | null = null
+let waveCtx: AudioContext | null = null
+let waveRaf: any = null
+
+function startWave(stream: MediaStream) {
+  try {
+    const Ctor = window.AudioContext || (window as any).webkitAudioContext
+    waveCtx = new Ctor()
+    const src = waveCtx.createMediaStreamSource(stream)
+    const analyser = waveCtx.createAnalyser()
+    analyser.fftSize = 64
+    src.connect(analyser)
+    const data = new Uint8Array(analyser.frequencyBinCount)
+    const loop = () => {
+      analyser.getByteFrequencyData(data)
+      recordLevels.value = Array.from(data.slice(0, 28), (v) => v / 255)
+      waveRaf = requestAnimationFrame(loop)
+    }
+    loop()
+  } catch {
+    /* visualizer is best-effort */
+  }
+}
+function stopWave() {
+  cancelAnimationFrame(waveRaf)
+  waveRaf = null
+  waveCtx?.close().catch(() => {})
+  waveCtx = null
+  recordLevels.value = new Array(28).fill(0)
+}
 
 const chatSocket = useSocket('/ws/chat/')
 const presenceSocket = useSocket('/ws/presence/')
@@ -191,6 +227,7 @@ async function toggleRecord() {
   recording.value = true
   recordSecs.value = 0
   recordTimer = setInterval(() => (recordSecs.value += 1), 1000)
+  startWave(recordStream)
 }
 function stopRecord(sendIt: boolean) {
   clearInterval(recordTimer)
@@ -199,6 +236,7 @@ function stopRecord(sendIt: boolean) {
   recorder?.stop()
 }
 async function onRecordStop() {
+  stopWave()
   recordStream?.getTracks().forEach((t) => t.stop())
   const shouldSend = (recorder as any)?._send
   recorder = null
@@ -226,7 +264,7 @@ function onInput() {
 }
 
 function startCall(video: boolean) {
-  if (activeId.value) call.start(activeId.value, video)
+  if (activeId.value) call.start(activeId.value, video, otherUser(activeConv.value))
 }
 function openMedia(url: string) {
   if (import.meta.client) window.open(url, '_blank')
@@ -242,6 +280,9 @@ function notifyMessage(m: any) {
     notifications.show(name, body)
   }
 }
+
+// Hide the mobile tab bar while a conversation thread is open.
+watch(activeId, (v) => (hideTabbar.value = !!v), { immediate: true })
 
 onMounted(async () => {
   notifications.request()
@@ -297,13 +338,14 @@ onUnmounted(() => {
   chatSocket.close()
   presenceSocket.close()
   clearInterval(recordTimer)
+  hideTabbar.value = false
 })
 </script>
 
 <template>
   <div class="mx-auto flex h-full max-w-6xl">
     <!-- Sidebar -->
-    <aside class="flex w-full max-w-xs shrink-0 flex-col border-e border-slate-200 dark:border-slate-800"
+    <aside class="flex w-full shrink-0 flex-col border-e border-slate-200 dark:border-slate-800 md:max-w-xs"
       :class="activeId ? 'hidden md:flex' : 'flex'">
       <div class="space-y-3 p-3">
         <div class="relative">
@@ -417,7 +459,10 @@ onUnmounted(() => {
         </div>
 
         <!-- Composer -->
-        <div class="border-t border-slate-200 dark:border-slate-800">
+        <div class="relative border-t border-slate-200 pb-safe dark:border-slate-800">
+          <div v-if="showEmoji" class="absolute bottom-full mb-2 start-2 z-20">
+            <EmojiPicker @select="addEmoji" />
+          </div>
           <div v-if="replyingTo" class="flex items-center gap-2 px-3 pt-2 text-xs">
             <ArrowUturnLeftIcon class="h-4 w-4 text-brand-500" />
             <span class="flex-1 truncate">Replying to @{{ replyingTo.sender?.username }}: {{ replyingTo.text || '📎' }}</span>
@@ -432,20 +477,26 @@ onUnmounted(() => {
             <div v-if="uploading" class="grid h-14 w-14 place-items-center rounded-lg bg-slate-100 text-xs text-slate-400 dark:bg-slate-800">…</div>
           </div>
 
-          <form v-if="!recording" class="flex items-center gap-2 p-3" @submit.prevent="send">
+          <form v-if="!recording" class="flex items-center gap-1.5 p-2 sm:gap-2 sm:p-3" @submit.prevent="send">
             <input ref="fileInput" type="file" multiple class="hidden" @change="onFiles" />
-            <button type="button" class="btn-ghost px-2" title="Attach" @click="pickFiles"><PaperClipIcon class="h-5 w-5" /></button>
-            <button type="button" class="btn-ghost px-2" title="Voice note" @click="toggleRecord"><MicrophoneIcon class="h-5 w-5" /></button>
-            <input v-model="draft" class="input" :placeholder="t('chat.placeholder')" @input="onInput" />
-            <button class="btn-primary px-3" :disabled="!draft.trim() && !pending.length">
+            <button type="button" class="btn-ghost h-10 w-10 px-0" title="Emoji" @click="showEmoji = !showEmoji"><FaceSmileIcon class="h-5 w-5" /></button>
+            <button type="button" class="btn-ghost h-10 w-10 px-0" title="Attach" @click="pickFiles"><PaperClipIcon class="h-5 w-5" /></button>
+            <button type="button" class="btn-ghost hidden h-10 w-10 px-0 sm:grid" title="Voice note" @click="toggleRecord"><MicrophoneIcon class="h-5 w-5" /></button>
+            <input v-model="draft" class="input" :placeholder="t('chat.placeholder')" @input="onInput" @focus="showEmoji = false" />
+            <button v-if="!draft.trim() && !pending.length" type="button" class="btn-primary h-10 w-10 px-0 sm:hidden" title="Voice note" @click="toggleRecord">
+              <MicrophoneIcon class="h-5 w-5" />
+            </button>
+            <button v-else class="btn-primary h-10 w-10 px-0" :disabled="!draft.trim() && !pending.length">
               <PaperAirplaneIcon class="h-5 w-5" :class="ui.dir === 'rtl' ? 'rotate-180' : ''" />
             </button>
           </form>
           <div v-else class="flex items-center gap-3 p-3">
-            <span class="flex items-center gap-2 text-sm text-red-500"><span class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" /> {{ fmtDur(recordSecs) }}</span>
-            <span class="flex-1 text-sm text-slate-500">Recording voice note…</span>
-            <button class="btn-ghost px-3" @click="stopRecord(false)">Cancel</button>
-            <button class="btn-primary px-3" title="Send" @click="stopRecord(true)"><StopIcon class="h-5 w-5" /></button>
+            <span class="flex shrink-0 items-center gap-2 text-sm font-medium text-red-500"><span class="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" /> {{ fmtDur(recordSecs) }}</span>
+            <div class="flex h-8 flex-1 items-center gap-px">
+              <span v-for="(l, i) in recordLevels" :key="i" class="flex-1 rounded-full bg-brand-500 transition-[height] duration-75" :style="{ height: `${Math.max(6, l * 100)}%` }" />
+            </div>
+            <button class="btn-ghost h-10 w-10 px-0" title="Cancel" @click="stopRecord(false)"><XMarkIcon class="h-5 w-5" /></button>
+            <button class="btn-primary h-10 w-10 px-0" title="Send" @click="stopRecord(true)"><PaperAirplaneIcon class="h-5 w-5" :class="ui.dir === 'rtl' ? 'rotate-180' : ''" /></button>
           </div>
         </div>
       </template>

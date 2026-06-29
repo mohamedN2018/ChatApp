@@ -54,7 +54,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div v-if="profile" class="mx-auto max-w-2xl space-y-6 p-4 sm:p-6">
+  <div v-if="profile" class="mx-auto h-full max-w-2xl space-y-6 overflow-y-auto p-4 pb-8 sm:p-6">
     <h1 class="text-2xl font-bold">Profile & settings</h1>
     <p v-if="saved" class="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">{{ saved }}</p>
 

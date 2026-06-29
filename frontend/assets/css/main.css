@@ -8,12 +8,28 @@
 
 html {
   height: 100%;
+  /* Use the dynamic viewport height on mobile so the address bar / keyboard
+     don't break full-height layouts. */
+  height: 100dvh;
 }
 body {
-  @apply h-full bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+  @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+  height: 100%;
+  height: 100dvh;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
 }
 #__nuxt {
   height: 100%;
+  height: 100dvh;
+}
+
+/* Safe-area helpers for notched devices. */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
 }
 
 /* Thin, theme-aware scrollbars for the premium feel. */
