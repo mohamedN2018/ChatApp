@@ -4,10 +4,10 @@ A production-grade, self-hostable messaging platform (Discord/Telegram/Slack-cla
 built on Django 5, Django Channels, PostgreSQL, Redis, Celery, and a Nuxt 3 frontend.
 Everything runs on free and open-source software.
 
-> **Status — Phases 0–7 complete** (Foundation, Authentication, Profiles/Social/
-> Presence, Realtime 1:1 Chat, Media/Files, Groups/Channels, Voice/Video Calls,
-> and Admin/i18n/Hardening). The full backend + WebSocket API is done; the Nuxt
-> frontend (Phase 8) is next. See the [Roadmap](#roadmap).
+> **Status — All 8 phases complete.** The full backend + WebSocket API (Phases
+> 0–7) and a Nuxt 3 frontend (Phase 8) are built, verified, and Dockerized. Run
+> `docker compose up --build` and open http://localhost:3000. See the
+> [Roadmap](#roadmap).
 
 ---
 
@@ -82,6 +82,7 @@ Then:
 
 | URL | What |
 |---|---|
+| http://localhost:3000/ | **Frontend** (Nuxt) — sign up, sign in, chat in realtime |
 | http://localhost:8000/health/ | Liveness probe |
 | http://localhost:8000/health/ready/ | Readiness (DB + Redis + channel layer) |
 | http://localhost:8000/api/docs/ | Swagger UI |
@@ -181,7 +182,11 @@ The build proceeds one complete, verified slice at a time.
   feature flags, announcements, user management, admin audit log, singleton system
   config with a **maintenance-mode** middleware (kill-switch), and i18n
   (English/Arabic) language negotiation via `X-Language` / Accept-Language.
-- [ ] **Phase 8 — Frontend:** Nuxt 3 app consuming the full API.
+- [x] **Phase 8 — Frontend:** Nuxt 3 + TypeScript + TailwindCSS + Pinia app —
+  auth (JWT + refresh), realtime chat (conversation list, thread, live delivery,
+  typing) and presence over WebSockets, dark/light theme, and English/Arabic with
+  **RTL** — Dockerized as the `frontend` service. The remaining screens (calls,
+  groups, admin) follow the same composable/store patterns.
 
 ---
 
