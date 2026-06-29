@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 
 from apps.common.pagination import CursorMessagePagination
 
-from .models import Conversation, ConversationParticipant, Message
+from .models import Conversation, ConversationParticipant, ConversationType, Message
 from .serializers import (
     ConversationSerializer,
     ConversationStateSerializer,
@@ -43,9 +43,12 @@ class ConversationListView(ListAPIView):
     serializer_class = ConversationSerializer
 
     def get_queryset(self):
+        # Direct conversations only; group channels are listed via the groups API.
         return (
             Conversation.objects.filter(
-                participants__user=self.request.user, participants__left_at__isnull=True
+                type=ConversationType.DIRECT,
+                participants__user=self.request.user,
+                participants__left_at__isnull=True,
             )
             .prefetch_related("participants__user__profile", "participants__user__privacy")
             .order_by("-last_message_at", "-created_at")

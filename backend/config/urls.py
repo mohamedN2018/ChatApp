@@ -28,6 +28,7 @@ api_v1_patterns = [
     path("presence/", include("apps.realtime.urls")),
     path("chat/", include("apps.chat.urls")),
     path("media/", include("apps.media.urls")),
+    path("groups/", include("apps.groups.urls")),
 ]
 
 urlpatterns = [

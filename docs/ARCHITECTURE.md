@@ -157,6 +157,23 @@ Key mechanisms:
   of a conversation where it's attached (`MessageAttachment`). URLs are
   time-limited presigned links.
 
+## Groups & channels (Phase 5)
+
+* **Channels reuse the chat layer.** A `Channel` is backed 1:1 by a
+  `Conversation`; group membership is mirrored into each public channel's
+  `ConversationParticipant` rows by `GroupService`. So messages, reactions,
+  receipts, attachments, and the WebSocket fan-out all work for channels with no
+  special-casing (verified live: a channel post reached a member's socket).
+* **Role hierarchy** owner > admin > moderator > member > guest, compared by rank
+  for every privileged action (create/delete channels, kick, change role, manage
+  invites). The owner is protected (can't be kicked/demoted; must transfer or
+  delete). Group/channel creation, joins, and removals keep channel participation
+  in sync so access and realtime delivery stay correct.
+* **Invites** carry an opaque code, optional expiry, and max-uses; joining is
+  atomic and increments usage. Public groups also support direct join + discovery
+  search. DM list endpoints are filtered to `direct` conversations so channels
+  don't leak into the inbox.
+
 ## Redis: three roles, three logical DBs
 
 | DB | Role |
