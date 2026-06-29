@@ -183,10 +183,21 @@ The build proceeds one complete, verified slice at a time.
   config with a **maintenance-mode** middleware (kill-switch), and i18n
   (English/Arabic) language negotiation via `X-Language` / Accept-Language.
 - [x] **Phase 8 — Frontend:** Nuxt 3 + TypeScript + TailwindCSS + Pinia app —
-  auth (JWT + refresh), realtime chat (conversation list, thread, live delivery,
-  typing) and presence over WebSockets, dark/light theme, and English/Arabic with
-  **RTL** — Dockerized as the `frontend` service. The remaining screens (calls,
-  groups, admin) follow the same composable/store patterns.
+  auth (JWT + refresh); realtime chat (conversation list, thread, live delivery,
+  typing, **image/file attachments**) and presence over WebSockets; **WebRTC
+  voice/video calls** (1:1 mesh with an incoming-call overlay); **groups &
+  channels** (create/join/discover + realtime channel chat); **profile &
+  settings** (avatar upload, privacy, notifications); and an **admin dashboard**
+  (stats, moderation, feature flags, users). Dark/light theme and English/Arabic
+  with **RTL**. Dockerized as the `frontend` service.
+
+**Media delivery:** images/files (and avatars/covers/banners) are streamed through
+the backend behind short-lived **signed URLs** — browser-usable in `<img>`/`<a>`,
+access-controlled, and free of MinIO's internal-host problem.
+
+**Known scope notes:** large group calls would need an **SFU** (current WebRTC is
+mesh — great for 1:1 and small groups); Arabic translation covers key API messages
+(more strings can be added via the same `.po`/`polib` flow).
 
 ---
 
