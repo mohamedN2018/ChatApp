@@ -116,6 +116,29 @@ Key mechanisms:
   initial render. Image uploads (avatar/cover) are validated and re-encoded to
   WebP via Pillow (`apps/common/images.py`), with a decompression-bomb guard.
 
+## Realtime chat (Phase 3)
+
+* **One service, two transports.** `ChatService` is the single code path for
+  send/edit/delete/react/read. A message sent over REST *or* over the WebSocket
+  persists and then broadcasts identically — so a REST `POST` is delivered to
+  connected clients in realtime (verified live: REST send → Redis channel layer →
+  recipient's socket).
+* **Personal-group fan-out.** Each socket joins only `chat.user.{id}`; every
+  conversation event is sent to each participant's personal group. One
+  subscription per client, and newly created conversations reach participants
+  without re-subscribing. (N sends per event — fine at 1:1/small-group; revisited
+  for large groups.)
+* **Conversations & participants.** A direct conversation is unique per pair via a
+  canonical `direct_key`. Per-user state (`ConversationParticipant`) carries read/
+  delivery cursors (→ unread counts & receipts), pin/archive/mute, and a
+  `cleared_at` "clear history for me" marker.
+* **Message semantics.** Reply (self-FK), edit (flagged), **delete-for-everyone**
+  (tombstone row preserved) vs **delete-for-me** (`hidden_for` M2M), reactions
+  (toggle, aggregated), and `client_id` echo for optimistic-UI dedupe. History is
+  **cursor-paginated** (stable under concurrent inserts) for infinite scroll.
+* **Channel-layer payloads** are normalised through DRF's JSON encoder so UUIDs/
+  datetimes survive both the in-memory (tests) and Redis/msgpack (prod) layers.
+
 ## Redis: three roles, three logical DBs
 
 | DB | Role |

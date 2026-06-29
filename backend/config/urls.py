@@ -26,6 +26,7 @@ api_v1_patterns = [
     path("profiles/", include("apps.profiles.urls")),
     path("social/", include("apps.social.urls")),
     path("presence/", include("apps.realtime.urls")),
+    path("chat/", include("apps.chat.urls")),
 ]
 
 urlpatterns = [

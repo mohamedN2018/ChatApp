@@ -4,9 +4,10 @@ A production-grade, self-hostable messaging platform (Discord/Telegram/Slack-cla
 built on Django 5, Django Channels, PostgreSQL, Redis, Celery, and a Nuxt 3 frontend.
 Everything runs on free and open-source software.
 
-> **Status — Phases 0–2 complete** (Foundation + Authentication + Profiles/Social/
-> Presence). The platform is built as a sequence of complete, verified vertical
-> slices. See the [Roadmap](#roadmap) for what is done and what's next.
+> **Status — Phases 0–3 complete** (Foundation, Authentication, Profiles/Social/
+> Presence, and Realtime 1:1 Chat). The platform is built as a sequence of
+> complete, verified vertical slices. See the [Roadmap](#roadmap) for what is
+> done and what's next.
 
 ---
 
@@ -156,8 +157,11 @@ The build proceeds one complete, verified slice at a time.
   friend requests (with mutual auto-accept), block (cascading), mute, and
   **realtime presence** over a JWT-authenticated WebSocket (Redis-backed
   online/away/busy/invisible + last-seen, with a REST fallback).
-- [ ] **Phase 3 — Realtime chat (1:1):** Channels consumers, conversations,
-  messages, typing, receipts, reactions, edit/delete.
+- [x] **Phase 3 — Realtime chat (1:1):** conversations (direct), messages with
+  reply/edit/delete (for-me & for-everyone tombstone), reactions, read/delivery
+  receipts, unread counts, pin/archive/mute, cursor-paginated history (infinite
+  scroll), and a JWT WebSocket `ChatConsumer` (send/typing/read/react/edit/delete)
+  — REST and WS share one service so a REST send is delivered in realtime.
 - [ ] **Phase 4 — Media & files:** MinIO uploads, chunked upload, image/video processing, voice notes.
 - [ ] **Phase 5 — Groups & channels:** roles/permissions, public/private, channels.
 - [ ] **Phase 6 — Voice & video calls:** WebRTC signaling, 1:1 then group (SFU).
